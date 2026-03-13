@@ -1,0 +1,5 @@
+{
+  "name": "Modern Minesweeper",
+  "description": "A sleek, modern Minesweeper game with Google Login, real-time high scores, and responsive design.",
+  "requestFramePermissions": []
+}

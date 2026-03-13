@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Information about a registered user.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique Firebase Auth ID." },
+        "displayName": { "type": "string", "description": "The user's display name." },
+        "photoURL": { "type": "string", "description": "The user's profile picture URL." },
+        "email": { "type": "string", "description": "The user's email address." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the user first logged in." }
+      },
+      "required": ["uid", "displayName", "email"]
+    },
+    "HighScore": {
+      "title": "High Score",
+      "description": "A record of a completed game with the time taken.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The user ID who achieved the score." },
+        "displayName": { "type": "string", "description": "The user's display name at the time." },
+        "time": { "type": "number", "description": "Time taken in seconds." },
+        "difficulty": { "type": "string", "enum": ["beginner", "intermediate", "expert"], "description": "The game difficulty level." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the score was achieved." }
+      },
+      "required": ["uid", "displayName", "time", "difficulty", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile documents."
+    },
+    "/high_scores/{scoreId}": {
+      "schema": "HighScore",
+      "description": "Global high scores collection."
+    }
+  }
+}
