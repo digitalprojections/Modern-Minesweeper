@@ -19,6 +19,8 @@ class GlobalToolsTest(unittest.TestCase):
         self.assertIn('link.created.minesweepermaui', script)
         self.assertIn('scripts\\publish-open-testing.ps1', script)
         self.assertIn('$Track = "beta"', script)
+        self.assertIn('$publishArgs = @{', script)
+        self.assertIn('& $scriptPath @publishArgs', script)
 
     def test_cmd_shims_call_matching_powershell_scripts(self):
         for name in ("minesweeper-release-aab", "minesweeper-open-testing"):

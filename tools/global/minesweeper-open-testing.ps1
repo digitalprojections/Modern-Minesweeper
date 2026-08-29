@@ -23,21 +23,21 @@ if (-not (Test-Path -LiteralPath $scriptPath)) {
     throw "Modern Minesweeper Open Testing publisher was not found at: $scriptPath"
 }
 
-$argsList = @(
-    "-PackageName", $PackageName,
-    "-Aab", $Aab,
-    "-Track", $Track,
-    "-ReleaseName", $ReleaseName,
-    "-Status", $Status
-)
+$publishArgs = @{
+    PackageName = $PackageName
+    Aab = $Aab
+    Track = $Track
+    ReleaseName = $ReleaseName
+    Status = $Status
+}
 
 if ($Credentials) {
-    $argsList += @("-Credentials", $Credentials)
+    $publishArgs.Credentials = $Credentials
 }
 
 Push-Location $projectPath
 try {
-    & $scriptPath @argsList
+    & $scriptPath @publishArgs
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 finally {
