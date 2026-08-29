@@ -35,6 +35,15 @@ class GlobalToolsTest(unittest.TestCase):
         self.assertIn("C:\\Program Files\\Android\\openjdk\\jdk-21.0.8", script)
         self.assertIn("$env:JAVA_HOME", script)
 
+    def test_upload_key_script_exports_play_reset_certificate(self):
+        script = (ROOT / "scripts" / "create-upload-key.ps1").read_text(encoding="utf-8")
+
+        self.assertIn("minesweeper-upload-key.jks", script)
+        self.assertIn("minesweeper-upload-certificate.pem", script)
+        self.assertIn("-genkeypair", script)
+        self.assertIn("-export", script)
+        self.assertIn("SHA1:", script)
+
 
 if __name__ == "__main__":
     unittest.main()

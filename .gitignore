@@ -13,6 +13,7 @@ screenshots/
 *.apk
 *.jks
 *.keystore
+android/keystores/
 google-services.json
 play-service-account*.json
 service-account*.json
