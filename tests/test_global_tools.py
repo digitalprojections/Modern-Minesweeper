@@ -26,6 +26,13 @@ class GlobalToolsTest(unittest.TestCase):
             self.assertIn(f'{name}.ps1', shim)
             self.assertIn("ExecutionPolicy Bypass", shim)
 
+    def test_release_script_prefers_jdk_21_for_capacitor(self):
+        script = (ROOT / "scripts" / "build-release-aab.ps1").read_text(encoding="utf-8")
+
+        self.assertIn("Use-Jdk21IfAvailable", script)
+        self.assertIn("C:\\Program Files\\Android\\openjdk\\jdk-21.0.8", script)
+        self.assertIn("$env:JAVA_HOME", script)
+
 
 if __name__ == "__main__":
     unittest.main()

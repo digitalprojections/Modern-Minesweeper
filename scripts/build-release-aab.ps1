@@ -5,6 +5,36 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Use-Jdk21IfAvailable {
+    $javaHome = [Environment]::GetEnvironmentVariable("JAVA_HOME", "Process")
+    if ($javaHome -and (Test-Path -LiteralPath (Join-Path $javaHome "bin\javac.exe"))) {
+        $versionOutput = & (Join-Path $javaHome "bin\javac.exe") -version 2>&1
+        if ($versionOutput -match "javac\s+2[1-9]\.") {
+            return
+        }
+    }
+
+    $candidates = @(
+        "C:\Program Files\Android\openjdk\jdk-21.0.8",
+        "C:\Program Files\Android\Android Studio\jbr"
+    )
+
+    foreach ($candidate in $candidates) {
+        $javac = Join-Path $candidate "bin\javac.exe"
+        if (-not (Test-Path -LiteralPath $javac)) {
+            continue
+        }
+
+        $versionOutput = & $javac -version 2>&1
+        if ($versionOutput -match "javac\s+2[1-9]\.") {
+            $env:JAVA_HOME = $candidate
+            $env:Path = "$candidate\bin;$env:Path"
+            Write-Host "Using JDK for release build: $candidate"
+            return
+        }
+    }
+}
+
 function Import-DotEnvFile {
     param([string]$Path)
 
@@ -30,6 +60,7 @@ function Import-DotEnvFile {
 }
 
 Import-DotEnvFile -Path $EnvFile
+Use-Jdk21IfAvailable
 
 if (-not $env:KEYSTORE_PATH) {
     $resolvedKeystore = Resolve-Path -LiteralPath $KeystorePath -ErrorAction Stop
