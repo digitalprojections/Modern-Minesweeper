@@ -19,6 +19,7 @@
     "android:open": "node scripts/capacitor-android.mjs open"
   },
   "dependencies": {
+    "@capacitor-community/admob": "^8.0.0",
     "@capacitor/android": "^8.5.0",
     "@capacitor/cli": "^8.5.0",
     "@capacitor/core": "^8.5.0",
@@ -45,8 +46,8 @@
     "@testing-library/user-event": "^14.6.6",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
-    "jsdom": "^29.1.1",
     "autoprefixer": "^10.4.21",
+    "jsdom": "^29.1.1",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",

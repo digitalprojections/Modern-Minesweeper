@@ -39,6 +39,7 @@ import {
   revealCells,
   toggleFlag,
 } from './gameLogic';
+import { initializeInterstitialAds, showGameOverInterstitial } from './lib/interstitialAds';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -113,6 +114,10 @@ export default function App() {
     initGrid();
   }, [initGrid]);
 
+  useEffect(() => {
+    void initializeInterstitialAds();
+  }, []);
+
   const startGame = (firstX: number, firstY: number) => {
     const startedGrid = createStartedGrid(SETTINGS[difficulty], firstX, firstY);
     const result = revealCells(startedGrid, firstX, firstY);
@@ -130,6 +135,7 @@ export default function App() {
       setGameState('lost');
       if (timerRef.current) clearInterval(timerRef.current);
       setGrid(result.grid);
+      void showGameOverInterstitial();
       return;
     }
 
@@ -150,6 +156,8 @@ export default function App() {
       if (user) {
         saveScore(time);
       }
+
+      void showGameOverInterstitial();
     }
   };
 

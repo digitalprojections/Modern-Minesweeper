@@ -52,6 +52,16 @@ class GlobalToolsTest(unittest.TestCase):
         self.assertIn("-export", script)
         self.assertIn("SHA1:", script)
 
+    def test_android_admob_native_config_is_present(self):
+        manifest = (ROOT / "android" / "app" / "src" / "main" / "AndroidManifest.xml").read_text(encoding="utf-8")
+        strings = (ROOT / "android" / "app" / "src" / "main" / "res" / "values" / "strings.xml").read_text(encoding="utf-8")
+        ads = (ROOT / "src" / "lib" / "interstitialAds.ts").read_text(encoding="utf-8")
+
+        self.assertIn("com.google.android.gms.ads.APPLICATION_ID", manifest)
+        self.assertIn("@string/admob_app_id", manifest)
+        self.assertIn("admob_app_id", strings)
+        self.assertIn("ca-app-pub-3838820812386239/6072644784", ads)
+
 
 if __name__ == "__main__":
     unittest.main()
