@@ -3,7 +3,7 @@ param(
     [string]$PackageName = "link.created.minesweepermaui",
     [string]$Aab = "android\app\build\outputs\bundle\release\app-release.aab",
     [string]$Track = "beta",
-    [string]$ReleaseName = "Modern Minesweeper 1.0.1 (2)",
+    [string]$ReleaseName = "Modern Minesweeper 1.0.2 (4)",
     [ValidateSet("completed", "draft")]
     [string]$Status = "completed",
     [string]$Credentials
