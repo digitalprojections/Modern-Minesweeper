@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
+    "assets:sync": "node scripts/sync-icons.mjs",
+    "prebuild": "npm run assets:sync",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "node -e \"fs.rmSync('dist',{recursive:true,force:true})\"",

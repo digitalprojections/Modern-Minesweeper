@@ -1,0 +1,20 @@
+{
+  "name": "Modern Minesweeper",
+  "short_name": "Minesweeper",
+  "description": "A polished, touch-friendly Minesweeper game.",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#050505",
+  "background_color": "#050505",
+  "display": "fullscreen"
+}
