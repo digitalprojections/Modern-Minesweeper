@@ -9,6 +9,8 @@ import {
   Settings, 
   LogOut, 
   LogIn,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { clsx, type ClassValue } from 'clsx';
@@ -40,6 +42,7 @@ import {
   toggleFlag,
 } from './gameLogic';
 import { initializeInterstitialAds, showGameOverInterstitial } from './lib/interstitialAds';
+import { createGameAudio } from './lib/gameAudio';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -54,8 +57,10 @@ export default function App() {
   const [flagsUsed, setFlagsUsed] = useState(0);
   const [highScores, setHighScores] = useState<HighScore[]>([]);
   const [flagMode, setFlagMode] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const audioRef = useRef(createGameAudio());
   const settings = SETTINGS[difficulty];
   const boardStyle = {
     '--rows': settings.rows,
@@ -101,7 +106,8 @@ export default function App() {
   }, [difficulty]);
 
   // Game Logic
-  const initGrid = useCallback(() => {
+  const initGrid = useCallback((playResetSound = false) => {
+    if (playResetSound) audioRef.current.play('reset');
     setGrid(createEmptyGrid(SETTINGS[difficulty]));
     setGameState('idle');
     setTime(0);
@@ -118,9 +124,14 @@ export default function App() {
     void initializeInterstitialAds();
   }, []);
 
+  useEffect(() => {
+    audioRef.current.setEnabled(soundEnabled);
+  }, [soundEnabled]);
+
   const startGame = (firstX: number, firstY: number) => {
     const startedGrid = createStartedGrid(SETTINGS[difficulty], firstX, firstY);
     const result = revealCells(startedGrid, firstX, firstY);
+    audioRef.current.play('start');
     setGrid(result.grid);
     setGameState('playing');
     
@@ -130,8 +141,10 @@ export default function App() {
   };
 
   const revealCell = (x: number, y: number, currentGrid: Cell[][]) => {
+    const revealedBefore = countRevealedCells(currentGrid);
     const result = revealCells(currentGrid, x, y);
     if (result.hitMine) {
+      audioRef.current.play('lose');
       setGameState('lost');
       if (timerRef.current) clearInterval(timerRef.current);
       setGrid(result.grid);
@@ -140,11 +153,17 @@ export default function App() {
     }
 
     setGrid(result.grid);
-    checkWin(result.grid);
+    if (!checkWin(result.grid)) {
+      const revealedAfter = countRevealedCells(result.grid);
+      if (revealedAfter > revealedBefore) {
+        audioRef.current.play(revealedAfter - revealedBefore > 1 ? 'clear' : 'reveal');
+      }
+    }
   };
 
   const checkWin = (currentGrid: Cell[][]) => {
     if (hasWon(currentGrid, SETTINGS[difficulty])) {
+      audioRef.current.play('win');
       setGameState('won');
       if (timerRef.current) clearInterval(timerRef.current);
       confetti({
@@ -158,7 +177,9 @@ export default function App() {
       }
 
       void showGameOverInterstitial();
+      return true;
     }
+    return false;
   };
 
   const saveScore = async (finalTime: number) => {
@@ -196,9 +217,23 @@ export default function App() {
 
   const handleFlagToggle = (x: number, y: number) => {
     if (gameState === 'idle' || gameState === 'won' || gameState === 'lost') return;
+    const wasFlagged = Boolean(grid[y]?.[x]?.isFlagged);
     const newGrid = toggleFlag(grid, x, y);
-    setFlagsUsed(countFlags(newGrid));
-    setGrid(newGrid);
+    const nextFlagsUsed = countFlags(newGrid);
+    if (nextFlagsUsed !== flagsUsed) {
+      audioRef.current.play(wasFlagged ? 'unflag' : 'flag');
+      setFlagsUsed(nextFlagsUsed);
+      setGrid(newGrid);
+    }
+  };
+
+  const toggleSound = () => {
+    setSoundEnabled(enabled => {
+      const nextEnabled = !enabled;
+      audioRef.current.setEnabled(nextEnabled);
+      if (nextEnabled) audioRef.current.play('toggle');
+      return nextEnabled;
+    });
   };
 
   return (
@@ -235,6 +270,15 @@ export default function App() {
                 Sign In
               </button>
             )}
+            <button
+              type="button"
+              onClick={toggleSound}
+              className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-all hover:bg-white/10"
+              aria-label={soundEnabled ? 'Mute sound' : 'Turn sound on'}
+              aria-pressed={!soundEnabled}
+            >
+              {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+            </button>
           </div>
         </div>
       </header>
@@ -266,7 +310,7 @@ export default function App() {
               <p className="min-w-0 truncate text-xs text-white/50">Tap to clear. Use Mark for flags.</p>
               <button
                 type="button"
-                onClick={initGrid}
+                onClick={() => initGrid(true)}
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-all hover:bg-white/10"
                 aria-label="New game"
               >
@@ -330,7 +374,7 @@ export default function App() {
                           </p>
                         </div>
                         <button
-                          onClick={initGrid}
+                          onClick={() => initGrid(true)}
                           className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#F27D26] py-3 font-bold text-white shadow-lg shadow-[#F27D26]/20 transition-all hover:bg-[#F27D26]/90"
                         >
                           <RotateCcw className="h-5 w-5" />
@@ -414,6 +458,10 @@ function TipItem({ text }: { text: string }) {
       {text}
     </li>
   );
+}
+
+function countRevealedCells(grid: Cell[][]) {
+  return grid.flat().filter(cell => cell.isRevealed).length;
 }
 
 function CellComponent({ cell, onClick, onContextMenu, gameState }: { 
