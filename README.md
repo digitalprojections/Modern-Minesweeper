@@ -44,3 +44,16 @@ Release AAB output:
 `android/app/build/outputs/bundle/release/app-release.aab`
 
 Publisher credentials are read from `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` or `--Credentials`. Keep keystores, service-account JSON, AAB/APK outputs, screenshots, and local properties uncommitted.
+
+## Global Release Tools
+
+Install command wrappers into `C:\Users\denta\.local\bin`:
+
+`powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\install-global-tools.ps1`
+
+Then run these from any directory:
+
+`minesweeper-release-aab`
+`minesweeper-open-testing`
+
+Set `MINESWEEPER_PROJECT_ROOT` only if the repo moves away from `C:\Users\denta\source\repos\Modern-Minesweeper`.
