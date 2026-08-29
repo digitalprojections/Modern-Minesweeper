@@ -119,6 +119,32 @@ describe('App gameplay', () => {
 
     expect(mocks.signInWithGoogle).toHaveBeenCalledTimes(1);
   });
+
+  it('can finish a deterministic game by marking mines and clearing safe cells', async () => {
+    render(<App />);
+
+    await userEvent.click(screen.getByTestId('cell-0-0'));
+    await userEvent.click(screen.getByRole('button', { name: /mark/i }));
+
+    const mines = new Set(['8-8', '7-8', '6-8', '5-8', '4-8', '3-8', '8-7', '7-7', '6-7', '5-7']);
+    for (const key of mines) {
+      const [x, y] = key.split('-');
+      await userEvent.click(screen.getByTestId(`cell-${x}-${y}`));
+    }
+
+    expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(1);
+    await userEvent.click(screen.getByRole('button', { name: /mark/i }));
+
+    for (let y = 0; y < 9; y++) {
+      for (let x = 0; x < 9; x++) {
+        if (!mines.has(`${x}-${y}`)) {
+          await userEvent.click(screen.getByTestId(`cell-${x}-${y}`));
+        }
+      }
+    }
+
+    expect(screen.getByText('Victory!')).toBeInTheDocument();
+  });
 });
 
 function createMineCoordinateSequence() {
