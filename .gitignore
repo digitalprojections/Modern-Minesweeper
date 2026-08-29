@@ -5,6 +5,7 @@ build/
 dist/
 coverage/
 screenshots/
+play-listing/screenshots/
 .DS_Store
 *.log
 .env*
