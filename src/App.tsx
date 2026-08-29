@@ -34,6 +34,14 @@ import {
 } from 'firebase/firestore';
 
 import { Difficulty, Cell, SETTINGS, HighScore } from './types';
+import {
+  countFlags,
+  createEmptyGrid,
+  createStartedGrid,
+  hasWon,
+  revealCells,
+  toggleFlag,
+} from './gameLogic';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -47,7 +55,7 @@ export default function App() {
   const [time, setTime] = useState(0);
   const [flagsUsed, setFlagsUsed] = useState(0);
   const [highScores, setHighScores] = useState<HighScore[]>([]);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [flagMode, setFlagMode] = useState(false);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -88,25 +96,11 @@ export default function App() {
 
   // Game Logic
   const initGrid = useCallback(() => {
-    const { rows, cols } = SETTINGS[difficulty];
-    const newGrid: Cell[][] = [];
-    for (let y = 0; y < rows; y++) {
-      const row: Cell[] = [];
-      for (let x = 0; x < cols; x++) {
-        row.push({
-          x, y,
-          isMine: false,
-          isRevealed: false,
-          isFlagged: false,
-          neighborCount: 0
-        });
-      }
-      newGrid.push(row);
-    }
-    setGrid(newGrid);
+    setGrid(createEmptyGrid(SETTINGS[difficulty]));
     setGameState('idle');
     setTime(0);
     setFlagsUsed(0);
+    setFlagMode(false);
     if (timerRef.current) clearInterval(timerRef.current);
   }, [difficulty]);
 
@@ -115,44 +109,10 @@ export default function App() {
   }, [initGrid]);
 
   const startGame = (firstX: number, firstY: number) => {
-    const { rows, cols, mines } = SETTINGS[difficulty];
-    const newGrid = [...grid.map(row => [...row])];
-    
-    // Place mines
-    let minesPlaced = 0;
-    while (minesPlaced < mines) {
-      const x = Math.floor(Math.random() * cols);
-      const y = Math.floor(Math.random() * rows);
-      
-      // Don't place mine on first click or already placed mine
-      if (!newGrid[y][x].isMine && (Math.abs(x - firstX) > 1 || Math.abs(y - firstY) > 1)) {
-        newGrid[y][x].isMine = true;
-        minesPlaced++;
-      }
-    }
-
-    // Calculate neighbors
-    for (let y = 0; y < rows; y++) {
-      for (let x = 0; x < cols; x++) {
-        if (!newGrid[y][x].isMine) {
-          let count = 0;
-          for (let dy = -1; dy <= 1; dy++) {
-            for (let dx = -1; dx <= 1; dx++) {
-              const ny = y + dy;
-              const nx = x + dx;
-              if (ny >= 0 && ny < rows && nx >= 0 && nx < cols && newGrid[ny][nx].isMine) {
-                count++;
-              }
-            }
-          }
-          newGrid[y][x].neighborCount = count;
-        }
-      }
-    }
-
-    setGrid(newGrid);
+    const startedGrid = createStartedGrid(SETTINGS[difficulty], firstX, firstY);
+    const result = revealCells(startedGrid, firstX, firstY);
+    setGrid(result.grid);
     setGameState('playing');
-    revealCell(firstX, firstY, newGrid);
     
     timerRef.current = setInterval(() => {
       setTime(t => t + 1);
@@ -160,48 +120,20 @@ export default function App() {
   };
 
   const revealCell = (x: number, y: number, currentGrid: Cell[][]) => {
-    if (currentGrid[y][x].isRevealed || currentGrid[y][x].isFlagged) return;
-
-    const newGrid = [...currentGrid.map(row => [...row])];
-    const cell = newGrid[y][x];
-    cell.isRevealed = true;
-
-    if (cell.isMine) {
+    const result = revealCells(currentGrid, x, y);
+    if (result.hitMine) {
       setGameState('lost');
       if (timerRef.current) clearInterval(timerRef.current);
-      // Reveal all mines
-      newGrid.forEach(row => row.forEach(c => {
-        if (c.isMine) c.isRevealed = true;
-      }));
-      setGrid(newGrid);
+      setGrid(result.grid);
       return;
     }
 
-    if (cell.neighborCount === 0) {
-      const { rows, cols } = SETTINGS[difficulty];
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          const ny = y + dy;
-          const nx = x + dx;
-          if (ny >= 0 && ny < rows && nx >= 0 && nx < cols) {
-            revealCell(nx, ny, newGrid);
-          }
-        }
-      }
-    }
-
-    setGrid(newGrid);
-    checkWin(newGrid);
+    setGrid(result.grid);
+    checkWin(result.grid);
   };
 
   const checkWin = (currentGrid: Cell[][]) => {
-    const { rows, cols, mines } = SETTINGS[difficulty];
-    let revealedCount = 0;
-    currentGrid.forEach(row => row.forEach(c => {
-      if (c.isRevealed) revealedCount++;
-    }));
-
-    if (revealedCount === rows * cols - mines) {
+    if (hasWon(currentGrid, SETTINGS[difficulty])) {
       setGameState('won');
       if (timerRef.current) clearInterval(timerRef.current);
       confetti({
@@ -233,6 +165,10 @@ export default function App() {
 
   const handleCellClick = (x: number, y: number) => {
     if (gameState === 'won' || gameState === 'lost') return;
+    if (flagMode && gameState === 'playing') {
+      handleFlagToggle(x, y);
+      return;
+    }
     if (gameState === 'idle') {
       startGame(x, y);
     } else {
@@ -242,32 +178,32 @@ export default function App() {
 
   const handleContextMenu = (e: React.MouseEvent, x: number, y: number) => {
     e.preventDefault();
-    if (gameState === 'idle' || gameState === 'won' || gameState === 'lost') return;
-    if (grid[y][x].isRevealed) return;
+    handleFlagToggle(x, y);
+  };
 
-    const newGrid = [...grid.map(row => [...row])];
-    const cell = newGrid[y][x];
-    cell.isFlagged = !cell.isFlagged;
-    setFlagsUsed(prev => cell.isFlagged ? prev + 1 : prev - 1);
+  const handleFlagToggle = (x: number, y: number) => {
+    if (gameState === 'idle' || gameState === 'won' || gameState === 'lost') return;
+    const newGrid = toggleFlag(grid, x, y);
+    setFlagsUsed(countFlags(newGrid));
     setGrid(newGrid);
   };
 
   return (
     <div className="min-h-screen bg-[#050505] text-[#E4E3E0] font-sans selection:bg-[#F27D26] selection:text-white overflow-x-hidden">
       {/* Header */}
-      <header className="border-b border-white/10 p-4 sticky top-0 bg-[#050505]/80 backdrop-blur-md z-50">
+      <header className="border-b border-white/10 p-3 sm:p-4 sticky top-0 bg-[#050505]/80 backdrop-blur-md z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#F27D26] rounded-lg flex items-center justify-center shadow-lg shadow-[#F27D26]/20">
-              <Bomb className="text-white w-6 h-6" />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#F27D26] rounded-lg flex items-center justify-center shadow-lg shadow-[#F27D26]/20">
+              <Bomb className="text-white w-5 h-5 sm:w-6 sm:h-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight uppercase italic">Minesweeper</h1>
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight uppercase italic">Minesweeper</h1>
               <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">Modern Edition v1.0</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             {user ? (
               <div className="flex items-center gap-3">
                 <div className="text-right hidden sm:block">
@@ -279,7 +215,7 @@ export default function App() {
             ) : (
               <button 
                 onClick={signInWithGoogle}
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-sm font-medium transition-all"
+                className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-sm font-medium transition-all"
               >
                 <LogIn className="w-4 h-4" />
                 Sign In
@@ -289,11 +225,11 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto p-4 sm:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main className="max-w-7xl mx-auto p-3 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
         {/* Left Column: Game Area */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className="lg:col-span-8 space-y-4 sm:space-y-6">
           {/* Stats Bar */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-2 sm:gap-4">
             <StatCard icon={<Flag className="w-4 h-4 text-[#F27D26]" />} label="Mines Left" value={SETTINGS[difficulty].mines - flagsUsed} />
             <StatCard icon={<Timer className="w-4 h-4 text-[#F27D26]" />} label="Time" value={time} />
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
@@ -314,10 +250,29 @@ export default function App() {
             </div>
           </div>
 
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+            <p className="text-xs text-white/50">Tap to clear. Use Mark for flags.</p>
+            <button
+              type="button"
+              onClick={() => setFlagMode(mode => !mode)}
+              disabled={gameState !== 'playing'}
+              className={cn(
+                "flex items-center gap-2 rounded-lg border px-3 py-2 sm:px-4 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-40",
+                flagMode
+                  ? "border-[#F27D26] bg-[#F27D26] text-white shadow-lg shadow-[#F27D26]/20"
+                  : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+              )}
+              aria-pressed={flagMode}
+            >
+              <Flag className="h-4 w-4" />
+              Mark
+            </button>
+          </div>
+
           {/* Game Board Container */}
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-[#F27D26] to-[#FF4444] rounded-3xl blur opacity-20 group-hover:opacity-30 transition duration-1000"></div>
-            <div className="relative bg-[#141414] border border-white/10 rounded-2xl p-4 sm:p-8 overflow-auto flex justify-center min-h-[400px]">
+            <div className="relative bg-[#141414] border border-white/10 rounded-2xl p-3 sm:p-6 lg:p-8 overflow-auto flex justify-center min-h-[320px] sm:min-h-[400px]">
               <div 
                 className="grid gap-1"
                 style={{ 
@@ -416,7 +371,7 @@ export default function App() {
           <section className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-widest text-white/40">Pro Tips</h3>
             <ul className="space-y-3">
-              <TipItem text="Right-click to place a flag on suspected mines." />
+              <TipItem text="Use Mark when you want to place or remove a flag." />
               <TipItem text="The numbers indicate how many mines are adjacent." />
               <TipItem text="First click is always safe and clears a space." />
               <TipItem text="Try to clear the board in the fastest time possible." />
@@ -436,11 +391,11 @@ export default function App() {
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode, label: string, value: number | string }) {
   return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
-      <div className="p-2 bg-white/5 rounded-lg">
+    <div className="bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center gap-2 sm:gap-4">
+      <div className="p-2 bg-white/5 rounded-lg shrink-0">
         {icon}
       </div>
-      <div>
+      <div className="min-w-0">
         <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">{label}</p>
         <p className="text-xl font-mono font-bold">{value}</p>
       </div>
