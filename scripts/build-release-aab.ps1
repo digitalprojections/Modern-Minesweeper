@@ -1,6 +1,6 @@
 param(
     [string]$EnvFile = ".env",
-    [string]$KeystorePath = "baa.keystore"
+    [string]$KeystorePath
 )
 
 $ErrorActionPreference = "Stop"
@@ -62,10 +62,10 @@ function Import-DotEnvFile {
 Import-DotEnvFile -Path $EnvFile
 Use-Jdk21IfAvailable
 
-if (-not $env:KEYSTORE_PATH) {
-    $resolvedKeystore = Resolve-Path -LiteralPath $KeystorePath -ErrorAction Stop
-    $env:KEYSTORE_PATH = $resolvedKeystore.Path
-}
+$effectiveKeystorePath = if ($KeystorePath) { $KeystorePath } elseif ($env:KEYSTORE_PATH) { $env:KEYSTORE_PATH } else { "baa.keystore" }
+$resolvedKeystore = Resolve-Path -LiteralPath $effectiveKeystorePath -ErrorAction Stop
+$env:KEYSTORE_PATH = $resolvedKeystore.Path
+Write-Host "Using release keystore: $($resolvedKeystore.Path)"
 
 $missing = @()
 foreach ($name in @("STORE_PASSWORD", "KEY_ALIAS", "KEY_PASSWORD")) {

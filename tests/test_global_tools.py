@@ -35,6 +35,13 @@ class GlobalToolsTest(unittest.TestCase):
         self.assertIn("C:\\Program Files\\Android\\openjdk\\jdk-21.0.8", script)
         self.assertIn("$env:JAVA_HOME", script)
 
+    def test_release_script_allows_explicit_keystore_override(self):
+        script = (ROOT / "scripts" / "build-release-aab.ps1").read_text(encoding="utf-8")
+
+        self.assertIn('$effectiveKeystorePath = if ($KeystorePath)', script)
+        self.assertIn('$env:KEYSTORE_PATH = $resolvedKeystore.Path', script)
+        self.assertIn("Using release keystore:", script)
+
     def test_upload_key_script_exports_play_reset_certificate(self):
         script = (ROOT / "scripts" / "create-upload-key.ps1").read_text(encoding="utf-8")
 
