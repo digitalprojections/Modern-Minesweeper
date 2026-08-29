@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Trophy, 
@@ -9,8 +9,6 @@ import {
   Settings, 
   LogOut, 
   LogIn,
-  Github,
-  Twitter
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { clsx, type ClassValue } from 'clsx';
@@ -56,6 +54,14 @@ export default function App() {
   const [flagMode, setFlagMode] = useState(false);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const settings = SETTINGS[difficulty];
+  const boardStyle = {
+    '--rows': settings.rows,
+    '--cols': settings.cols,
+    aspectRatio: `${settings.cols} / ${settings.rows}`,
+    gridTemplateColumns: `repeat(${settings.cols}, minmax(0, 1fr))`,
+    gridAutoRows: '1fr',
+  } as CSSProperties;
 
   // Auth listener
   useEffect(() => {
@@ -187,21 +193,20 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#E4E3E0] font-sans selection:bg-[#F27D26] selection:text-white overflow-x-hidden">
-      {/* Header */}
-      <header className="border-b border-white/10 p-3 sm:p-4 sticky top-0 bg-[#050505]/80 backdrop-blur-md z-50">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-[#F27D26] rounded-lg flex items-center justify-center shadow-lg shadow-[#F27D26]/20">
-              <Bomb className="text-white w-5 h-5 sm:w-6 sm:h-6" />
+    <div className="app-shell bg-[#050505] text-[#E4E3E0] font-sans selection:bg-[#F27D26] selection:text-white">
+      <header className="shrink-0 border-b border-white/10 bg-[#050505]/90 px-3 py-2 backdrop-blur-md sm:px-4">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#F27D26] shadow-lg shadow-[#F27D26]/20 sm:h-10 sm:w-10">
+              <Bomb className="h-5 w-5 text-white sm:h-6 sm:w-6" />
             </div>
-            <div>
-              <h1 className="text-lg sm:text-xl font-bold tracking-tight uppercase italic">Minesweeper</h1>
-              <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">Modern Edition v1.0</p>
+            <div className="min-w-0">
+              <h1 className="truncate text-lg font-bold uppercase italic tracking-tight sm:text-xl">Minesweeper</h1>
+              <p className="truncate font-mono text-[9px] uppercase tracking-widest text-white/40 sm:text-[10px]">Modern Edition v1.0</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex shrink-0 items-center gap-3 sm:gap-4">
             {user ? (
               <div className="flex items-center gap-3">
                 <div className="text-right hidden sm:block">
@@ -213,7 +218,7 @@ export default function App() {
             ) : (
               <button 
                 onClick={signInWithGoogle}
-                className="flex items-center gap-2 px-3 py-2 sm:px-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-sm font-medium transition-all"
+                className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium transition-all hover:bg-white/10 sm:px-4"
               >
                 <LogIn className="w-4 h-4" />
                 Sign In
@@ -223,125 +228,122 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto p-3 sm:p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8">
-        {/* Left Column: Game Area */}
-        <div className="lg:col-span-8 space-y-4 sm:space-y-6">
-          {/* Stats Bar */}
-          <div className="grid grid-cols-3 gap-2 sm:gap-4">
-            <StatCard icon={<Flag className="w-4 h-4 text-[#F27D26]" />} label="Mines Left" value={SETTINGS[difficulty].mines - flagsUsed} />
-            <StatCard icon={<Timer className="w-4 h-4 text-[#F27D26]" />} label="Time" value={time} />
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/5 rounded-lg">
-                  <Settings className="w-4 h-4 text-white/60" />
-                </div>
-                <select 
-                  value={difficulty} 
-                  onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-                  className="bg-transparent text-sm font-medium focus:outline-none cursor-pointer"
-                >
-                  <option value="beginner" className="bg-[#141414]">Beginner</option>
-                  <option value="intermediate" className="bg-[#141414]">Intermediate</option>
-                  <option value="expert" className="bg-[#141414]">Expert</option>
-                </select>
+      <main className="mx-auto grid min-h-0 w-full max-w-7xl flex-1 grid-cols-1 gap-3 p-3 lg:grid-cols-[minmax(0,1fr)_320px] lg:p-4">
+        <section className="grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3">
+          <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
+            <StatCard icon={<Flag className="h-4 w-4 text-[#F27D26]" />} label="Mines" value={settings.mines - flagsUsed} />
+            <StatCard icon={<Timer className="h-4 w-4 text-[#F27D26]" />} label="Time" value={time} />
+            <div className="flex min-w-[142px] items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-2">
+              <div className="rounded-lg bg-white/5 p-2">
+                <Settings className="h-4 w-4 text-white/60" />
               </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-            <p className="text-xs text-white/50">Tap to clear. Use Mark for flags.</p>
-            <button
-              type="button"
-              onClick={() => setFlagMode(mode => !mode)}
-              disabled={gameState !== 'playing'}
-              className={cn(
-                "flex items-center gap-2 rounded-lg border px-3 py-2 sm:px-4 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-40",
-                flagMode
-                  ? "border-[#F27D26] bg-[#F27D26] text-white shadow-lg shadow-[#F27D26]/20"
-                  : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
-              )}
-              aria-pressed={flagMode}
-            >
-              <Flag className="h-4 w-4" />
-              Mark
-            </button>
-          </div>
-
-          {/* Game Board Container */}
-          <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-[#F27D26] to-[#FF4444] rounded-3xl blur opacity-20 group-hover:opacity-30 transition duration-1000"></div>
-            <div className="relative bg-[#141414] border border-white/10 rounded-2xl p-3 sm:p-6 lg:p-8 overflow-auto flex justify-center min-h-[320px] sm:min-h-[400px]">
-              <div 
-                className="grid gap-1"
-                style={{ 
-                  gridTemplateColumns: `repeat(${SETTINGS[difficulty].cols}, minmax(0, 1fr))`,
-                  width: 'fit-content'
-                }}
+              <select
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value as Difficulty)}
+                className="min-w-0 flex-1 cursor-pointer bg-transparent text-sm font-semibold focus:outline-none"
+                aria-label="Difficulty"
               >
-                {grid.map((row, y) => (
-                  row.map((cell, x) => (
-                    <CellComponent 
-                      key={`${x}-${y}`}
-                      cell={cell}
-                      onClick={() => handleCellClick(x, y)}
-                      onContextMenu={(e) => handleContextMenu(e, x, y)}
-                      gameState={gameState}
-                    />
-                  ))
-                ))}
-              </div>
-
-              {/* Game Over Overlay */}
-              <AnimatePresence>
-                {(gameState === 'won' || gameState === 'lost') && (
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl z-10"
-                  >
-                    <div className="text-center space-y-6 p-8 bg-[#141414] border border-white/20 rounded-3xl shadow-2xl">
-                      <div className={cn(
-                        "w-20 h-20 mx-auto rounded-full flex items-center justify-center",
-                        gameState === 'won' ? "bg-emerald-500/20 text-emerald-500" : "bg-red-500/20 text-red-500"
-                      )}>
-                        {gameState === 'won' ? <Trophy className="w-10 h-10" /> : <Bomb className="w-10 h-10" />}
-                      </div>
-                      <div>
-                        <h2 className="text-3xl font-bold uppercase italic tracking-tight">
-                          {gameState === 'won' ? 'Victory!' : 'Game Over'}
-                        </h2>
-                        <p className="text-white/40 text-sm mt-1">
-                          {gameState === 'won' ? `Completed in ${time} seconds` : 'Better luck next time'}
-                        </p>
-                      </div>
-                      <button 
-                        onClick={initGrid}
-                        className="w-full flex items-center justify-center gap-2 py-3 bg-[#F27D26] hover:bg-[#F27D26]/90 text-white font-bold rounded-xl transition-all shadow-lg shadow-[#F27D26]/20"
-                      >
-                        <RotateCcw className="w-5 h-5" />
-                        Play Again
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                <option value="beginner" className="bg-[#141414]">Beginner</option>
+                <option value="intermediate" className="bg-[#141414]">Intermediate</option>
+                <option value="expert" className="bg-[#141414]">Expert</option>
+              </select>
             </div>
           </div>
-        </div>
 
-        {/* Right Column: Leaderboard & Info */}
-        <div className="lg:col-span-4 space-y-8">
-          {/* Leaderboard Section */}
-          <section className="bg-[#141414] border border-white/10 rounded-2xl overflow-hidden">
-            <div className="p-6 border-b border-white/10 flex items-center justify-between">
+          <div className="relative grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-3">
+            <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] p-2">
+              <p className="min-w-0 truncate text-xs text-white/50">Tap to clear. Use Mark for flags.</p>
+              <button
+                type="button"
+                onClick={initGrid}
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-white/70 transition-all hover:bg-white/10"
+                aria-label="New game"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setFlagMode(mode => !mode)}
+                disabled={gameState !== 'playing'}
+                className={cn(
+                  "flex h-10 items-center gap-2 rounded-lg border px-3 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-40",
+                  flagMode
+                    ? "border-[#F27D26] bg-[#F27D26] text-white shadow-lg shadow-[#F27D26]/20"
+                    : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                )}
+                aria-pressed={flagMode}
+              >
+                <Flag className="h-4 w-4" />
+                Mark
+              </button>
+            </div>
+
+            <div className="relative min-h-0">
+              <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-[#F27D26] to-[#FF4444] opacity-20 blur transition duration-1000"></div>
+              <div className="relative grid h-full min-h-0 place-items-center rounded-xl border border-white/10 bg-[#141414] p-2">
+                <div className="board-grid grid gap-1" style={boardStyle}>
+                  {grid.map((row, y) => (
+                    row.map((cell, x) => (
+                      <CellComponent
+                        key={`${x}-${y}`}
+                        cell={cell}
+                        onClick={() => handleCellClick(x, y)}
+                        onContextMenu={(e) => handleContextMenu(e, x, y)}
+                        gameState={gameState}
+                      />
+                    ))
+                  ))}
+                </div>
+
+                <AnimatePresence>
+                  {(gameState === 'won' || gameState === 'lost') && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-black/60 p-4 backdrop-blur-sm"
+                    >
+                      <div className="space-y-4 rounded-xl border border-white/20 bg-[#141414] p-5 text-center shadow-2xl">
+                        <div className={cn(
+                          "mx-auto flex h-16 w-16 items-center justify-center rounded-full",
+                          gameState === 'won' ? "bg-emerald-500/20 text-emerald-500" : "bg-red-500/20 text-red-500"
+                        )}>
+                          {gameState === 'won' ? <Trophy className="h-8 w-8" /> : <Bomb className="h-8 w-8" />}
+                        </div>
+                        <div>
+                          <h2 className="text-2xl font-bold uppercase italic tracking-tight">
+                            {gameState === 'won' ? 'Victory!' : 'Game Over'}
+                          </h2>
+                          <p className="mt-1 text-sm text-white/40">
+                            {gameState === 'won' ? `Completed in ${time} seconds` : 'Better luck next time'}
+                          </p>
+                        </div>
+                        <button
+                          onClick={initGrid}
+                          className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#F27D26] py-3 font-bold text-white shadow-lg shadow-[#F27D26]/20 transition-all hover:bg-[#F27D26]/90"
+                        >
+                          <RotateCcw className="h-5 w-5" />
+                          Play Again
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside className="hidden min-h-0 space-y-3 lg:block">
+          <section className="flex max-h-full flex-col overflow-hidden rounded-xl border border-white/10 bg-[#141414]">
+            <div className="flex items-center justify-between border-b border-white/10 p-4">
               <div className="flex items-center gap-2">
                 <Trophy className="w-4 h-4 text-[#F27D26]" />
                 <h3 className="text-sm font-bold uppercase tracking-widest italic">Leaderboard</h3>
               </div>
               <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono">{difficulty}</span>
             </div>
-            <div className="p-2">
+            <div className="min-h-0 flex-1 p-2">
               {highScores.length > 0 ? (
                 highScores.map((score, idx) => (
                   <div key={score.id} className="flex items-center justify-between p-3 hover:bg-white/5 rounded-xl transition-colors group">
@@ -365,23 +367,16 @@ export default function App() {
             </div>
           </section>
 
-          {/* Tips Section */}
-          <section className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-4">
+          <section className="space-y-3 rounded-xl border border-white/10 bg-white/5 p-4">
             <h3 className="text-xs font-bold uppercase tracking-widest text-white/40">Pro Tips</h3>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               <TipItem text="Use Mark when you want to place or remove a flag." />
               <TipItem text="The numbers indicate how many mines are adjacent." />
               <TipItem text="First click is always safe and clears a space." />
               <TipItem text="Try to clear the board in the fastest time possible." />
             </ul>
           </section>
-
-          {/* Footer Info */}
-          <div className="flex items-center justify-center gap-6 text-white/20">
-            <a href="#" className="hover:text-white transition-colors"><Twitter className="w-5 h-5" /></a>
-            <a href="#" className="hover:text-white transition-colors"><Github className="w-5 h-5" /></a>
-          </div>
-        </div>
+        </aside>
       </main>
     </div>
   );
@@ -389,13 +384,13 @@ export default function App() {
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode, label: string, value: number | string }) {
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex items-center gap-2 sm:gap-4">
-      <div className="p-2 bg-white/5 rounded-lg shrink-0">
+    <div className="flex min-w-0 items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-2">
+      <div className="shrink-0 rounded-lg bg-white/5 p-2">
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] text-white/40 uppercase tracking-widest font-mono">{label}</p>
-        <p className="text-xl font-mono font-bold">{value}</p>
+        <p className="truncate font-mono text-[9px] uppercase tracking-widest text-white/40 sm:text-[10px]">{label}</p>
+        <p className="font-mono text-lg font-bold leading-tight sm:text-xl">{value}</p>
       </div>
     </div>
   );
@@ -440,7 +435,7 @@ function CellComponent({ cell, onClick, onContextMenu, gameState }: {
       data-flagged={cell.isFlagged}
       data-revealed={cell.isRevealed}
       className={cn(
-        "w-8 h-8 sm:w-9 sm:h-9 flex appearance-none items-center justify-center text-sm font-bold cursor-pointer transition-all duration-200 rounded-md select-none",
+        "cell-button flex appearance-none items-center justify-center rounded-md text-sm font-bold transition-all duration-200",
         cell.isRevealed 
           ? "bg-white/5 shadow-inner" 
           : "bg-white/10 shadow-md border border-white/5 hover:border-white/20",

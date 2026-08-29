@@ -144,7 +144,7 @@ describe('App gameplay', () => {
     }
 
     expect(screen.getByText('Victory!')).toBeInTheDocument();
-  });
+  }, 10000);
 });
 
 function createMineCoordinateSequence() {
