@@ -38,7 +38,7 @@ Open Testing maps to Google Play track `beta`. Do not use this workflow for prod
    `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-release-aab.ps1`
 3. Commit release-ready source changes before upload.
 4. Publish only to beta:
-   `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish-open-testing.ps1 -Track beta -ReleaseName "Modern Minesweeper 1.0 (1)"`
+   `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish-open-testing.ps1 -Track beta -ReleaseName "Modern Minesweeper 1.0.1 (2)"`
 
 Release AAB output:
 `android/app/build/outputs/bundle/release/app-release.aab`

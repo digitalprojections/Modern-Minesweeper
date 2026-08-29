@@ -19,6 +19,7 @@ class GlobalToolsTest(unittest.TestCase):
         self.assertIn('link.created.minesweepermaui', script)
         self.assertIn('scripts\\publish-open-testing.ps1', script)
         self.assertIn('$Track = "beta"', script)
+        self.assertIn('Modern Minesweeper 1.0.1 (2)', script)
         self.assertIn('$publishArgs = @{', script)
         self.assertIn('& $scriptPath @publishArgs', script)
 
