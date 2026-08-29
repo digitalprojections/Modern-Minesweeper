@@ -1,4 +1,5 @@
 import { copyFileSync, mkdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -27,5 +28,14 @@ mkdirSync(publicIconDir, { recursive: true });
 copyFileSync(join(imageDir, '192x192_ic_launcher.png'), join(publicIconDir, 'icon-192.png'));
 copyFileSync(join(imageDir, '512x512_play_store_icon.png'), join(publicIconDir, 'icon-512.png'));
 copyFileSync(join(imageDir, '512x512_play_store_icon.png'), join(publicIconDir, 'apple-touch-icon.png'));
+
+const splashResult = spawnSync('python', [join(root, 'scripts', 'make-splash-icon.py')], {
+  cwd: root,
+  stdio: 'inherit',
+});
+
+if (splashResult.status !== 0) {
+  process.exit(splashResult.status ?? 1);
+}
 
 console.log('Synced app icon assets.');
