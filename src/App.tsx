@@ -9,8 +9,6 @@ import {
   Settings, 
   LogOut, 
   LogIn,
-  ChevronRight,
-  ChevronLeft,
   Github,
   Twitter
 } from 'lucide-react';
@@ -431,13 +429,18 @@ function CellComponent({ cell, onClick, onContextMenu, gameState }: {
   };
 
   return (
-    <motion.div
+    <motion.button
+      type="button"
       whileHover={!cell.isRevealed && !isGameOver ? { scale: 1.05, backgroundColor: 'rgba(255,255,255,0.1)' } : {}}
       whileTap={!cell.isRevealed && !isGameOver ? { scale: 0.95 } : {}}
       onClick={onClick}
       onContextMenu={onContextMenu}
+      aria-label={`Cell ${cell.x + 1}, ${cell.y + 1}${cell.isFlagged ? ', flagged' : ''}${cell.isRevealed ? ', revealed' : ''}`}
+      data-testid={`cell-${cell.x}-${cell.y}`}
+      data-flagged={cell.isFlagged}
+      data-revealed={cell.isRevealed}
       className={cn(
-        "w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-sm font-bold cursor-pointer transition-all duration-200 rounded-md select-none",
+        "w-8 h-8 sm:w-9 sm:h-9 flex appearance-none items-center justify-center text-sm font-bold cursor-pointer transition-all duration-200 rounded-md select-none",
         cell.isRevealed 
           ? "bg-white/5 shadow-inner" 
           : "bg-white/10 shadow-md border border-white/5 hover:border-white/20",
@@ -458,6 +461,6 @@ function CellComponent({ cell, onClick, onContextMenu, gameState }: {
       ) : (
         cell.isFlagged && <Flag className="w-4 h-4 text-[#F27D26] drop-shadow-[0_0_8px_rgba(242,125,38,0.5)]" />
       )}
-    </motion.div>
+    </motion.button>
   );
 }
