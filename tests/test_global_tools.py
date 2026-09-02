@@ -19,12 +19,22 @@ class GlobalToolsTest(unittest.TestCase):
         self.assertIn('link.created.minesweepermaui', script)
         self.assertIn('scripts\\publish-open-testing.ps1', script)
         self.assertIn('$Track = "beta"', script)
-        self.assertIn('Modern Minesweeper 1.0.2 (4)', script)
+        self.assertIn('Modern Minesweeper 1.0.3 (5)', script)
+        self.assertIn('$publishArgs = @{', script)
+        self.assertIn('& $scriptPath @publishArgs', script)
+
+    def test_production_wrapper_uses_required_package_and_production_script(self):
+        script = (ROOT / "tools" / "global" / "minesweeper-production.ps1").read_text(encoding="utf-8")
+
+        self.assertIn('link.created.minesweepermaui', script)
+        self.assertIn('scripts\\publish-production.ps1', script)
+        self.assertIn('Modern Minesweeper 1.0.3 (5)', script)
+        self.assertNotIn('$Track', script)
         self.assertIn('$publishArgs = @{', script)
         self.assertIn('& $scriptPath @publishArgs', script)
 
     def test_cmd_shims_call_matching_powershell_scripts(self):
-        for name in ("minesweeper-release-aab", "minesweeper-open-testing"):
+        for name in ("minesweeper-release-aab", "minesweeper-open-testing", "minesweeper-production"):
             shim = (ROOT / "tools" / "global" / f"{name}.cmd").read_text(encoding="utf-8")
             self.assertIn(f'{name}.ps1', shim)
             self.assertIn("ExecutionPolicy Bypass", shim)

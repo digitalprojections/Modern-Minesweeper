@@ -28,17 +28,20 @@ Android package ID: `link.created.minesweepermaui`
 Debug APK output:
 `android/app/build/outputs/apk/debug/app-debug.apk`
 
-## Open Testing Release
+## Android Release
 
-Open Testing maps to Google Play track `beta`. Do not use this workflow for production.
+The Android app currently targets Android 16 / API level 36.
+Open Testing maps to Google Play track `beta`.
 
 1. Put release signing values in `.env` or the current shell:
    `KEYSTORE_PATH`, `STORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`
 2. Build the signed release bundle:
    `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-release-aab.ps1`
 3. Commit release-ready source changes before upload.
-4. Publish only to beta:
-   `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish-open-testing.ps1 -Track beta -ReleaseName "Modern Minesweeper 1.0.2 (4)"`
+4. Publish to beta for Open Testing:
+   `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish-open-testing.ps1 -Track beta -ReleaseName "Modern Minesweeper 1.0.3 (5)"`
+5. Publish the tested bundle to production:
+   `powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish-production.ps1 -ReleaseName "Modern Minesweeper 1.0.3 (5)"`
 
 Release AAB output:
 `android/app/build/outputs/bundle/release/app-release.aab`
@@ -55,5 +58,6 @@ Then run these from any directory:
 
 `minesweeper-release-aab`
 `minesweeper-open-testing`
+`minesweeper-production`
 
 Set `MINESWEEPER_PROJECT_ROOT` only if the repo moves away from `C:\Users\denta\source\repos\Modern-Minesweeper`.

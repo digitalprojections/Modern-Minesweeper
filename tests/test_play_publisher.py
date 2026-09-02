@@ -28,11 +28,13 @@ class FakeHttp:
 
 
 class PlayPublisherTest(unittest.TestCase):
-    def test_normalize_track_allows_only_open_testing(self):
+    def test_normalize_track_allows_supported_release_tracks(self):
         self.assertEqual(normalize_track("open-testing"), "beta")
+        self.assertEqual(normalize_track("open_testing"), "beta")
         self.assertEqual(normalize_track("beta"), "beta")
+        self.assertEqual(normalize_track("production"), "production")
         with self.assertRaises(PublisherError):
-            normalize_track("production")
+            normalize_track("internal")
 
     def test_update_track_uses_beta_release_with_string_version_code(self):
         http = FakeHttp()

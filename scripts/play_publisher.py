@@ -20,7 +20,12 @@ ANDROID_PUBLISHER_SCOPE = "https://www.googleapis.com/auth/androidpublisher"
 TOKEN_URI = "https://oauth2.googleapis.com/token"
 API_ROOT = "https://androidpublisher.googleapis.com/androidpublisher/v3"
 UPLOAD_ROOT = "https://androidpublisher.googleapis.com/upload/androidpublisher/v3"
-TRACK_ALIASES = {"open-testing": "beta", "open_testing": "beta", "beta": "beta"}
+TRACK_ALIASES = {
+    "open-testing": "beta",
+    "open_testing": "beta",
+    "beta": "beta",
+    "production": "production",
+}
 
 
 class PublisherError(RuntimeError):
@@ -37,7 +42,7 @@ class ServiceAccount:
 def normalize_track(track: str) -> str:
     normalized = TRACK_ALIASES.get(track.strip().lower())
     if normalized is None:
-        raise PublisherError("Only Open Testing/beta publishing is supported by this helper.")
+        raise PublisherError("Only beta/open-testing and production publishing are supported by this helper.")
     return normalized
 
 
@@ -207,7 +212,7 @@ def publish_bundle(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Publish Modern Minesweeper to Google Play Open Testing.")
+    parser = argparse.ArgumentParser(description="Publish Modern Minesweeper to Google Play.")
     parser.add_argument("--credentials", type=Path, help="Path to Play service-account JSON.")
     parser.add_argument("--package", default="link.created.minesweepermaui", dest="package_name")
     subparsers = parser.add_subparsers(dest="command", required=True)

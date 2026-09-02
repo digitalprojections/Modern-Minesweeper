@@ -13,10 +13,12 @@ foreach ($tool in @(
     "minesweeper-release-aab.ps1",
     "minesweeper-release-aab.cmd",
     "minesweeper-open-testing.ps1",
-    "minesweeper-open-testing.cmd"
+    "minesweeper-open-testing.cmd",
+    "minesweeper-production.ps1",
+    "minesweeper-production.cmd"
 )) {
     Copy-Item -LiteralPath (Join-Path $sourceDir $tool) -Destination (Join-Path $targetPath $tool) -Force
 }
 
 Write-Host "Installed Modern Minesweeper tools to $targetPath"
-Write-Host "Available commands: minesweeper-release-aab, minesweeper-open-testing"
+Write-Host "Available commands: minesweeper-release-aab, minesweeper-open-testing, minesweeper-production"
